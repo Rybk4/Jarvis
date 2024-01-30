@@ -8,13 +8,10 @@ def recognize_speech():
     while True:
         with sr.Microphone() as source:
             try:
-                audio_data = recognizer.listen(source, timeout=5)  # запись аудио с микрофона
+                audio_data = recognizer.listen(source, timeout=5) 
 
                 print("Распознавание речи:")
-                text = recognizer.recognize_google(audio_data, language="en-US")  # Распознавание на английском
-                print("Текст (английский):", text)
-
-                russian_text = recognizer.recognize_google(audio_data, language="ru-RU")  # Распознавание на русском
+                russian_text = recognizer.recognize_google(audio_data, language="ru-RU")  
                 print("Текст (русский):", russian_text)
 
             except sr.UnknownValueError:
