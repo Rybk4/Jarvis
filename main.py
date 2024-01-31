@@ -1,44 +1,84 @@
-import requests
+
+import argparse
+import queue
+import sys
 import sounddevice as sd
-import numpy as np
-import io
-import soundfile as sf
 
-def record_audio(filename='recorded_audio.wav', duration=5, samplerate=16000):
-    print("Recording...")
-    audio_data = sd.rec(int(samplerate * duration), samplerate=samplerate, channels=1, dtype=np.int16)
-    sd.wait()
-    sf.write(filename, audio_data, samplerate)
+from vosk import Model, KaldiRecognizer
 
-def recognize_speech_yandex(api_key, audio_file):
-    with open(audio_file, 'rb') as file:
-        audio_data = file.read()
+q = queue.Queue()
 
-    url = "https://stt.api.cloud.yandex.net/speech/v1/stt:recognize"
-    headers = {
-        'Authorization': f"Api-Key {api_key}",
-        'Content-Type': 'audio/x-wav',
-    }
+def int_or_str(text):
+    """Helper function for argument parsing."""
+    try:
+        return int(text)
+    except ValueError:
+        return text
 
-    params = {
-        'format': 'lpcm',
-        'sampleRateHertz': 16000,
-    }
+def callback(indata, frames, time, status):
+    """This is called (from a separate thread) for each audio block."""
+    if status:
+        print(status, file=sys.stderr)
+    q.put(bytes(indata))
 
-    response = requests.post(url, headers=headers, params=params, data=audio_data)
+parser = argparse.ArgumentParser(add_help=False)
+parser.add_argument(
+    "-l", "--list-devices", action="store_true",
+    help="show list of audio devices and exit")
+args, remaining = parser.parse_known_args()
+if args.list_devices:
+    print(sd.query_devices())
+    parser.exit(0)
+parser = argparse.ArgumentParser(
+    description=__doc__,
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    parents=[parser])
+parser.add_argument(
+    "-f", "--filename", type=str, metavar="FILENAME",
+    help="audio file to store recording to")
+parser.add_argument(
+    "-d", "--device", type=int_or_str,
+    help="input device (numeric ID or substring)")
+parser.add_argument(
+    "-r", "--samplerate", type=int, help="sampling rate")
+parser.add_argument(
+    "-m", "--model", type=str, help="language model; e.g. en-us, fr, nl; default is en-us")
+args = parser.parse_args(remaining)
 
-    if response.status_code == 200:
-        result = response.json()
-        if 'result' in result:
-            print("Распознавание речи (Yandex SpeechKit):", result['result'])
-        else:
-            print("Ошибка распознавания:", result)
+try:
+    if args.samplerate is None:
+        device_info = sd.query_devices(args.device, "input")
+        # soundfile expects an int, sounddevice provides a float:
+        args.samplerate = int(device_info["default_samplerate"])
+        
+    if args.model is None:
+        model = Model(lang="ru")
     else:
-        print("Ошибка запроса к Yandex SpeechKit:", response.status_code, response.text)
+        model = Model(lang=args.model)
 
-if __name__ == "__main__":
-    API_KEY = 'ВАШ_API_КЛЮЧ_YANDEX_SPEECHKIT'
-    audio_filename = 'recorded_audio.wav'
+    if args.filename:
+        dump_fn = open(args.filename, "wb")
+    else:
+        dump_fn = None
 
-    record_audio(audio_filename)
-    recognize_speech_yandex(API_KEY, audio_filename)
+    with sd.RawInputStream(samplerate=args.samplerate, blocksize = 8000, device=args.device,
+            dtype="int16", channels=1, callback=callback):
+        # print("#" * 80)
+        # print("Press Ctrl+C to stop the recording")
+        # print("#" * 80)
+
+        rec = KaldiRecognizer(model, args.samplerate)
+        while True:
+            data = q.get()
+            if rec.AcceptWaveform(data):
+                print(rec.Result())
+            else:
+                print(rec.PartialResult())
+            if dump_fn is not None:
+                dump_fn.write(data)
+
+except KeyboardInterrupt:
+    print("\nDone")
+    parser.exit(0)
+except Exception as e:
+    parser.exit(type(e).__name__ + ": " + str(e))
