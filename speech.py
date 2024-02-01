@@ -3,7 +3,7 @@ import queue
 import sys
 import sounddevice as sd
 from vosk import Model, KaldiRecognizer
-from libs.word2numberi18n import w2n
+from word2numberi18n import w2n
 
 q = queue.Queue()
 

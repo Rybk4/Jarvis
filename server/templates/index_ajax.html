@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Switch Page</title>
+</head>
+<body>
+    <h1>Switch Control</h1>
+    
+    <label>Вкл/Выкл звук:
+        <input type="checkbox" id="switch1" onchange="toggleSwitch('switch1')">
+    </label>
+    <br>
+    <label>Switch 2:
+        <input type="checkbox" id="switch2" onchange="toggleSwitch('switch2')">
+    </label>
+
+    <script>
+        function toggleSwitch(switchId) {
+            var checkbox = document.getElementById(switchId);
+            var action = checkbox.checked ? 'on' : 'off';
+
+            // Отправляем AJAX-запрос на сервер
+            fetch('/switch', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'switch_id': switchId,
+                    'action': action,
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.result);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>
