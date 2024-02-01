@@ -1,15 +1,9 @@
-#!/usr/bin/env python3
-
-# prerequisites: as described in https://alphacephei.com/vosk/install and also python module `sounddevice` (simply run command `pip install sounddevice`)
-# Example usage using Dutch (nl) recognition model: `python test_microphone.py -m nl`
-# For more help run: `python test_microphone.py -h`
-
 import argparse
 import queue
 import sys
 import sounddevice as sd
-
 from vosk import Model, KaldiRecognizer
+from libraries.word2numberi18n import w2n
 
 q = queue.Queue()
 
@@ -50,6 +44,7 @@ parser.add_argument(
     "-m", "--model", type=str, help="language model; e.g. en-us, fr, nl; default is en-us")
 args = parser.parse_args(remaining)
 
+ 
 try:
     if args.samplerate is None:
         device_info = sd.query_devices(args.device, "input")
@@ -66,24 +61,34 @@ try:
     else:
         dump_fn = None
 
-    with sd.RawInputStream(samplerate=args.samplerate, blocksize = 8000, device=args.device,
+    with sd.RawInputStream(samplerate=args.samplerate, blocksize=8000, device=args.device,
             dtype="int16", channels=1, callback=callback):
-        print("#" * 80)
-        print("Press Ctrl+C to stop the recording")
-        print("#" * 80)
 
         rec = KaldiRecognizer(model, args.samplerate)
         while True:
             data = q.get()
+
             if rec.AcceptWaveform(data):
-                print(rec.Result())
-            else:
-                print(rec.PartialResult())
-            if dump_fn is not None:
-                dump_fn.write(data)
+                final_result = rec.Result()
+
+                # Преобразование слов в цифры в итоговом результате
+                words = final_result.split()
+                for i, word in enumerate(words):
+                    try:
+                        numeric_value = w2n.word_to_num(word)
+                        words[i] = str(numeric_value)
+                    except ValueError:
+                        pass  # Не удалось преобразовать, оставляем слово без изменений
+
+                updated_result = ' '.join(words)
+                print(updated_result)
+
+                if dump_fn is not None:
+                    dump_fn.write(data)
 
 except KeyboardInterrupt:
     print("\nDone")
     parser.exit(0)
 except Exception as e:
     parser.exit(type(e).__name__ + ": " + str(e))
+
