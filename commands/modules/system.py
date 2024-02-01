@@ -1,6 +1,6 @@
 import os
 
-from modules.log import logging
+from commands.modules.log import logging
 
 # Перезагрузить компьютер
 def rebootPC():

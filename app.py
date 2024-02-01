@@ -1,25 +1,30 @@
-from speech_old import process_audio_input
-from commands.modules.volume import volumeMax , volumeMute , volumeDown
+from commands.modules.speech import process_audio_input
+from commands.modules.volume import volumeMax, volumeMute, volumeDown
+from commands.modules.brightness import setBrightness
 import keyboard
 
+def on_q_pressed():
+    keyboard.unhook_all()  # Отключаем все обработчики событий клавиш
+    print("Quitting the program.")
+    exit()
 
-print("Press any key to start audio processing or press 'Q' to quit.")
+# Добавляем обработчик события для клавиши 'q'
+keyboard.add_hotkey('q', on_q_pressed)
+
+print("Press 'Q' to quit.")
 while True:
-    
-    if keyboard.is_pressed('q'):
-        break
     result = process_audio_input()
-    if (result != ""):
-        if(result == "раз"):
-             
+
+    if result:
+        print("Processed result:", result)
+
+        if result == "раз":
             volumeMax()
-
-        if(result == "5"):
-            
+        elif result == "5":
             volumeMute()
-
-        if(result == "2"):
-           
+        elif result == "2":
             volumeDown()
-    else:
-        result = process_audio_input()
+        elif "яркость" in result:
+            brightness_value = ''.join(filter(str.isdigit, result))
+            if brightness_value:
+                setBrightness(int(brightness_value))

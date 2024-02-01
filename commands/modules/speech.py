@@ -5,7 +5,8 @@ import queue
 import sys
 import sounddevice as sd
 from vosk import Model, KaldiRecognizer
-from word2numberi18n import w2n
+from commands.libs.word2numberi18n import w2n
+ 
 import json
 
 def int_or_str(text):
