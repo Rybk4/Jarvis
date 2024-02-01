@@ -1,9 +1,11 @@
+# speech_processing.py
+
 import argparse
 import queue
 import sys
 import sounddevice as sd
 from vosk import Model, KaldiRecognizer
-from libs.word2numberi18n import w2n
+from word2numberi18n import w2n
 import json
 
 def int_or_str(text):
@@ -36,29 +38,26 @@ def extract_and_process_result(result):
     print(updated_result)
     return updated_result
 
-def process_audio_input(args):
+def process_audio_input(device=None, samplerate=None, model=None):
     q = queue.Queue()
+    updated_result = None  # Устанавливаем значение по умолчанию
 
     try:
-        if args.samplerate is None:
-            device_info = sd.query_devices(args.device, "input")
-            # soundfile expects an int, sounddevice provides a float:
-            args.samplerate = int(device_info["default_samplerate"])
+        if samplerate is None:
+            # Получаем информацию об устройстве, если значение не указано
+            device_info = sd.query_devices(device, "input")
+            samplerate = int(device_info["default_samplerate"])
 
-        if args.model is None:
+        if model is None:
+            # Используем языковую модель по умолчанию, если не указано другое значение
             model = Model(lang="ru")
         else:
-            model = Model(lang=args.model)
+            model = Model(lang=model)
 
-        if args.filename:
-            dump_fn = open(args.filename, "wb")
-        else:
-            dump_fn = None
+        with sd.RawInputStream(samplerate=samplerate, blocksize=8000, device=device,
+                dtype="int16", channels=1, callback=lambda indata, frames, time, status: callback(indata, frames, time, status, q, model, None)):
 
-        with sd.RawInputStream(samplerate=args.samplerate, blocksize=8000, device=args.device,
-                dtype="int16", channels=1, callback=lambda indata, frames, time, status: callback(indata, frames, time, status, q, model, dump_fn)):
-
-            rec = KaldiRecognizer(model, args.samplerate)
+            rec = KaldiRecognizer(model, samplerate)
             while True:
                 data = q.get()
 
@@ -66,17 +65,16 @@ def process_audio_input(args):
                     final_result = json.loads(rec.Result())
 
                     updated_result = extract_and_process_result(final_result)
+                    if updated_result !="":
 
-                    if dump_fn is not None:
-                        dump_fn.write(data)
+                        return updated_result
 
     except KeyboardInterrupt:
         print("\nDone")
     except Exception as e:
         print(type(e).__name__ + ": " + str(e))
     finally:
-        if dump_fn is not None:
-            dump_fn.close()
+        return updated_result
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(add_help=False)
@@ -104,4 +102,4 @@ if __name__ == "__main__":
         "-m", "--model", type=str, help="language model; e.g. en-us, fr, nl; default is en-us")
     args = parser.parse_args(remaining)
 
-    process_audio_input(args)
+    process_audio_input(args.device, args.samplerate, args.model)
