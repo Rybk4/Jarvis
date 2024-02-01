@@ -1,5 +1,5 @@
 from datetime import date
-from modules.sound.sound import Sound
+from libs.sound.sound import Sound
 
 print("")
 print("Windows Sound Manager (Python 3)")

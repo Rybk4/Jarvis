@@ -1,4 +1,4 @@
-from libraries.sound.sound import Sound
+from libs.sound.sound import Sound
 
 from modules.log import logging
 
