@@ -1,3 +1,9 @@
+#!/usr/bin/env python3
+
+# prerequisites: as described in https://alphacephei.com/vosk/install and also python module `sounddevice` (simply run command `pip install sounddevice`)
+# Example usage using Dutch (nl) recognition model: `python test_microphone.py -m nl`
+# For more help run: `python test_microphone.py -h`
+
 import argparse
 import queue
 import sys
@@ -62,6 +68,10 @@ try:
 
     with sd.RawInputStream(samplerate=args.samplerate, blocksize = 8000, device=args.device,
             dtype="int16", channels=1, callback=callback):
+        print("#" * 80)
+        print("Press Ctrl+C to stop the recording")
+        print("#" * 80)
+
         rec = KaldiRecognizer(model, args.samplerate)
         while True:
             data = q.get()
