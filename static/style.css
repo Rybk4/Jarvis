@@ -1,6 +1,13 @@
 body{
     margin: 0;
 }
+a{
+    text-decoration: none;
+    color: black;
+}
+ul{
+    list-style: none;
+}
 .container{
     margin: 0 auto;
     padding: 10px;
@@ -13,12 +20,17 @@ body{
      
 }
 .left{
+ 
     background-color: aqua;
-    height: 100px;
+    height: 720px;
+    max-height:720px ;
     width: 20%;
 }
 .right{
     background-color: aquamarine;
-    height: 100px;
     width: 80%;
+}
+.navigation li{
+ padding-top: 10px;
+ padding-bottom: 10px;    
 }
