@@ -1,36 +1,42 @@
-body{
+body {
     margin: 0;
 }
-a{
+
+a {
     text-decoration: none;
     color: black;
 }
-ul{
+
+ul {
     list-style: none;
 }
-.container{
+
+.container {
     margin: 0 auto;
     padding: 10px;
     background-color: rgb(65, 65, 65);
-}
-.split{
-
-    display: flex;
-    justify-content: space-evenly;
      
 }
-.left{
- 
+
+.split {
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.left {
+     
     background-color: aqua;
     height: 720px;
-    max-height:720px ;
+    max-height: 720px;
     width: 20%;
 }
-.right{
+
+.right {
     background-color: aquamarine;
     width: 80%;
 }
-.navigation li{
- padding-top: 10px;
- padding-bottom: 10px;    
+
+.navigation li {
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
