@@ -18,14 +18,14 @@ while True:
     if result:
         print("Processed result:", result)
 
-        if result == "раз":
+        if (result == "громкость на 100" or result=="громкость на стол" ):
             volumeMax()
-        elif result == "5":
+        elif result == "выключи звук":
             volumeMute()
-        elif result == "2":
+        elif result == "сделай потише":
             volumeDown()
         elif "яркость" in result:
             brightness_value = ''.join(filter(str.isdigit, result))
             if brightness_value:
                 setBrightness(int(brightness_value))
-        else: print("Please say again")
+        else: print("Я не понял ваш запрос повторите снова")
